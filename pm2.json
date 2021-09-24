@@ -27,7 +27,8 @@
         },
         {
             "name"        : "oracle_server",
-            "script"      : "./server.js"
+            "script"      : "./server.js",
+            "args"        : "-p 8080"
         }
     ]
 }
