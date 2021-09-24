@@ -1,0 +1,33 @@
+{
+    "apps" : [
+        {
+            "name"        : "oracle_bsc",
+            "script"      : "./oracle.js",
+            "args"        : "-n ethereum"
+        },
+        {
+            "name"        : "oracle_bsc",
+            "script"      : "./oracle.js",
+            "args"        : "-n bsc"
+        },
+        {
+            "name"        : "oracle_polygon",
+            "script"      : "./oracle.js",
+            "args"        : "-n polygon"
+        },
+        {
+            "name"        : "oracle_fantom",
+            "script"      : "./oracle.js",
+            "args"        : "-n fantom"
+        },
+        {
+            "name"        : "oracle_avax",
+            "script"      : "./oracle.js",
+            "args"        : "-n avax"
+        },
+        {
+            "name"        : "oracle_server",
+            "script"      : "./server.js"
+        }
+    ]
+}

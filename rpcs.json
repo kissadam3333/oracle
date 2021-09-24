@@ -1,0 +1,7 @@
+{
+    "polygon": "https://polygon-rpc.com/",
+    "ethereum": "https://main-rpc.linkpool.io",
+    "bsc": "https://bsc-dataseed.binance.org",
+    "avax": "https://api.avax.network/ext/bc/C/rpc",
+    "fantom": "https://rpc.ftm.tools"
+}
