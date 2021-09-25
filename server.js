@@ -50,7 +50,6 @@ app.get('/', cors(), (req, res) => {
         status: 404,
         error: 'Not found',
         message: 'Nothing to be seen here.',
-        serverMessage: error,
     });
     return;
 });

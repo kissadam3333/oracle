@@ -55,6 +55,7 @@ const rpc = {
             //     return false;
             // }
 
+            this.last = await this.web3.eth.getBlockNumber();
             this.connected = true;
             process.stdout.write(`Connected to ${args.network} RPC. Fetching ${this.sampleSize} blocks before serving data.\n`);
         }
@@ -68,7 +69,7 @@ const rpc = {
 
     getBlock: async function(num) {
         if (!this.connected){
-            return new Error('Not connected');
+            throw new Error('Not connected');
         }
 
         try {
@@ -84,7 +85,7 @@ const rpc = {
     loop: async function(){
         try {
             // get a block
-            const block = await this.getBlock(this.last || 'latest');
+            const block = await this.getBlock(this.last);
             const sortedBlocks = Object.keys(this.blocks).sort();
             if (block && block.transactions){
                 // save the block

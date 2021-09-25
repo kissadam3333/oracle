@@ -1,7 +1,7 @@
 {
     "apps" : [
         {
-            "name"        : "oracle_bsc",
+            "name"        : "oracle_eth",
             "script"      : "./oracle.js",
             "args"        : "-n ethereum"
         },
