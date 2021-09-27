@@ -107,12 +107,13 @@ const rpc = {
 
     recordBlock: function(block) {
         // extract the gas from transactions
-        const transactions = block.transactions.map(t => parseFloat(this.web3.utils.fromWei(t.gasPrice, 'gwei')));
+        const transactions = block.transactions.filter(t => t.gasPrice != '0').map(t => parseFloat(this.web3.utils.fromWei(t.gasPrice, 'gwei')));
         this.blocks[block.number] = {
             ntx: transactions.length,
             timestamp: block.timestamp,
             minGwei: Math.min(...transactions),
         };
+        // console.log(...transactions);
 
         // sort the blocks and discard if higher than sampleSize
         const sortedBlocks = Object.keys(this.blocks).sort((a,b) => parseInt(a) - parseInt(b));
@@ -146,7 +147,7 @@ const rpc = {
         b.forEach(block => Object.keys(result).forEach(key => result[key].push(block[key])));
 
         // last block
-        result.lastBLock = this.last;
+        result.lastBlock = this.last;
 
         fs.writeFileSync(`${__dirname}/blockStats_${args.network}.json`, JSON.stringify(result));
         return result;
