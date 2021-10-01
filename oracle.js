@@ -111,9 +111,18 @@ const rpc = {
         this.blocks[block.number] = {
             ntx: transactions.length,
             timestamp: block.timestamp,
-            minGwei: Math.min(...transactions),
+            minGwei: [],
+            avgGas: [],
         };
-        // console.log(...transactions);
+
+        if (transactions.length){
+            // set average gas per tx in the block
+            const avgGas = parseInt(block.gasUsed) / transactions.length;
+            const minGas = Math.min(...transactions);
+
+            this.blocks[block.number].minGwei = minGas;
+            this.blocks[block.number].avgGas = avgGas;
+        }
 
         // sort the blocks and discard if higher than sampleSize
         const sortedBlocks = Object.keys(this.blocks).sort((a,b) => parseInt(a) - parseInt(b));
