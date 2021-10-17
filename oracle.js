@@ -1,5 +1,6 @@
 const Web3 = require('web3');
 const fs = require('fs');
+const db = require('./database');
 
 const args = {
     network: 'ethereum',
@@ -90,6 +91,8 @@ const rpc = {
             if (block && block.transactions){
                 // save the block
                 this.recordBlock(block);
+                // call to update monited wallets. required only if want to monitor txs to target addresses
+                db.updateWalletsMonitoring(block, args.network);
                 this.last = block.number + 1;
             }
             else if (sortedBlocks.length < this.sampleSize){

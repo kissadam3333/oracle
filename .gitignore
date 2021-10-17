@@ -1,2 +1,4 @@
 node_modules
-blockStats*.json
+blockStats*
+.vscode
+db_file
