@@ -92,7 +92,7 @@ const rpc = {
                 // save the block
                 this.recordBlock(block);
                 // call to update monited wallets. required only if want to monitor txs to target addresses
-                db.updateWalletsMonitoring(block, args.network);
+                // db.updateWallets(block, args.network);
                 this.last = block.number + 1;
             }
             else if (sortedBlocks.length < this.sampleSize){

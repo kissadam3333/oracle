@@ -50,12 +50,20 @@ app.get('/:network', cors(), (req, res) => {
 
 // get tx info from address
 app.get('/tx/:address', cors(), async (req, res) => {
-    const fromTime = req.query.fromtime;
-    const toTime = req.query.totime;
+    res.status(404);
+    res.send({
+        status: 404,
+        error: 'Not found',
+        message: 'This endpoint was disabled.'
+    });
+    return;
+
+    const fromTime = parseInt(req.query.fromtime);
+    const toTime = parseInt(req.query.totime);
     const address = req.params.address;
 
     // check if address is already being monitored
-    const addressInfo = (() => {
+    const addressInfo = await (async () => {
         let info = await db.getWallet(address);
         if (!info.length){
             await db.monitorWallet(address);
@@ -80,7 +88,7 @@ app.get('/tx/:address', cors(), async (req, res) => {
             }
 
             // find exact blocks requested by timestamp
-            const [fromBlock, toBlock] = ((fromTime, toTime, web3, stats) => {
+            const [fromBlock, toBlock] = await (async (fromTime, toTime, web3, stats) => {
                 let fromBlock = getBlockNumberFromTimestamp(fromTime, web3, stats);
                 let toBlock = getBlockNumberFromTimestamp(toTime, web3, stats);
                 const blocks = await Promise.all([fromBlock, toBlock]);
@@ -94,28 +102,28 @@ app.get('/tx/:address', cors(), async (req, res) => {
             if (toBlock.error){
                 return toBlock.error;
             }
-            
+
             const blocks = JSON.parse(addressInfo.blocks_checked)[network] || [];
         
             // expand checked blocks
-            const allBLocks = blocks.reduce((p,c) => [...p, ...Array.from({length: c[1] - c[0] + 1}, (_,i) => i + c[0])],[]);
+            const allBlocks = blocks.reduce((p,c) => [...p, ...Array.from({length: c[1] - c[0] + 1}, (_,i) => i + c[0])],[]);
             // list of wanted blocks
-            const wanted = Array.from({length: toBlock - fromBlock + 1}, (_,i) => i + fromBlock);
+            const wanted = Array.from({length: parseInt(toBlock) - parseInt(fromBlock) + 1}, (_,i) => i + parseInt(fromBlock));
             // pick only the missing blocks from wanted list
-            const missing = wanted.filter(e => !allBLocks.includes(e));
+            const missing = wanted.filter(e => !allBlocks.includes(e));
 
             // now I know which blocks I want, update
             let retrievedBlocks = [];
             for (let i in missing){
-                retrievedBlocks.push(await web3.eth.getBlock(missing[i]));
+                retrievedBlocks.push(await web3.eth.getBlock(missing[i], true));
 
                 // update each 10 retrieved blocks
                 if (retrievedBlocks.length >= 10){
-                    await db.updateWallet(addressInfo.wallet, retrievedBlocks, network);
+                    await db.updateWallets(retrievedBlocks, network);
                     retrievedBlocks = [];
                 }
             }
-            await db.updateWallet(addressInfo.wallet, retrievedBlocks, network);
+            await db.updateWallets(retrievedBlocks, network);
 
             const wallet = (await db.getWallet(addressInfo.wallet))[0];
             wallet.blocks_checked = JSON.parse(wallet.blocks_checked);
@@ -136,8 +144,8 @@ app.get('/tx/:address', cors(), async (req, res) => {
 
     res.send({
         message: 'success',
-        wallet: addressInfo[0].wallet,
-        blocksChecked: JSON.parse(addressInfo[0].blocks_checked),
+        wallet: addressInfo.wallet,
+        blocksChecked: JSON.parse(addressInfo.blocks_checked),
         txs: txs,
     });
 });

@@ -111,86 +111,82 @@ const db = {
         return await result;
     },
 
-    updateWalletsMonitoring: async function(blocks, network) {
-        const wallets = await this.getWallet();
-        return Promise.all(wallets.map(async wallet => this.updateWallet(wallet, blocks, network)));
-    },
-
-    updateWallet: async function(wallet, blocks, network){
+    updateWallets: async function(blocks, network){
         const db = this.init();
 
-        wallet = await this.getWallet(wallet);
-        if (!wallet.length){
-            return { error: `Wallet not found` };
+        const wallets = await this.getWallet();
+        if (!wallets.length){
+            return { error: `No wallets found` };
         }
-        wallet = wallet[0];
-
-        const allTx = await this.getTx(wallet.wallet);
 
         blocks = Array.isArray(blocks) ? blocks : [blocks];
 
-        for (let i in blocks){
-            const block = blocks[i];
+        const insertSql = db.prepare('INSERT INTO transactions (tx, towallet, fromwallet, block, value, timestamp, network) VALUES (?,?,?,?,?,?,?)');
+        const updateSql = db.prepare('UPDATE wallets SET blocks_checked = ? WHERE wallet = ?');
 
-            await new Promise(resolve => db.serialize(() => {
-                let stmt = db.prepare('INSERT INTO transactions (tx, towallet, fromwallet, block, value, timestamp, network) VALUES (?,?,?,?,?,?)');
-                block.transactions.forEach(t => {
-                    // transaction not already included and to monitored wallet
-                    if (!allTx.includes(t.hash) && t.to && wallet.wallet == t.to.toLowerCase()) {
-                        stmt.run([
-                            t.hash,
-                            t.to.toLowerCase(),
-                            t.from.toLowerCase(),
-                            block.number,
-                            parseFloat(t.value) * 0.000000001,
-                            block.timestamp,
-                            args.network,
-                        ]);
-                    }
-                });
-                stmt.finalize();
-
-                resolve(true);
-            }));
-        }
-
-        blocks = blocks.map(e => e.number);
-
-        let checked = JSON.parse(wallet.blocks_checked)[network] || [];
-        // expand all checked blocks
-        let allBlocks = checked.reduce((p,c) => [...p, ...Array.from({length: c[1] - c[0] + 1}, (_,i) => i + c[0])], []);
-        // insert into allblocks
-
-        allBlocks.push(...blocks.filter(e => !allBlocks.includes(e)));
-        allBlocks = allBlocks.sort((a,b) => a-b);
-
-        // shrink allblocks again
-        checked = (c => {
-            const groups = [];
-            let gi = 0;
-            for (let i in c){
-                if (groups.length == gi){
-                    groups.push([]);
-                    groups[gi] = [c[i], c[i]];
-                }
-                else if (c[i] == groups[gi][1] + 1){
-                    groups[gi][1]++;
-                }
-                else {
-                    gi++;
-                    groups.push([]);
-                    groups[gi] = [c[i], c[i]];
-                }
+        await Promise.all(wallets.map(async wallet => {
+            const allTx = await this.getTx(wallet.wallet);
+        
+            for (let i in blocks){
+                const block = blocks[i];
+    
+                await new Promise(resolve => db.serialize(() => {
+                    block.transactions.forEach(t => {
+                        // transaction not already included and to monitored wallet
+                        if (!allTx.includes(t.hash) && t.to && wallet.wallet == t.to.toLowerCase()) {
+                            insertSql.run([
+                                t.hash,
+                                t.to.toLowerCase(),
+                                t.from.toLowerCase(),
+                                block.number,
+                                parseFloat(t.value) * 0.000000001,
+                                block.timestamp,
+                                args.network,
+                            ]);
+                        }
+                    });
+                    resolve(true);
+                }));
             }
-            return groups;
-        })(allBlocks);
-
-        const bc = JSON.parse(wallet.blocks_checked) || {};
-        bc[network] = checked;
-
-        const updt = db.prepare('UPDATE wallets SET blocks_checked = ? WHERE wallet = ?');
-        updt.run([ JSON.stringify(bc), wallet.wallet ]);
-        updt.finalize();
+    
+            const blocksNum = blocks.map(e => e.number);
+    
+            let checked = JSON.parse(wallet.blocks_checked)[network] || [];
+            // expand all checked blocks
+            let allBlocks = checked.reduce((p,c) => [...p, ...Array.from({length: c[1] - c[0] + 1}, (_,i) => i + c[0])], []);
+            // insert into allblocks
+    
+            allBlocks.push(...blocksNum.filter(e => !allBlocks.includes(e)));
+            allBlocks = allBlocks.sort((a,b) => a-b);
+    
+            // shrink allblocks again
+            checked = (c => {
+                const groups = [];
+                let gi = 0;
+                for (let i in c){
+                    if (groups.length == gi){
+                        groups.push([]);
+                        groups[gi] = [c[i], c[i]];
+                    }
+                    else if (c[i] == groups[gi][1] + 1){
+                        groups[gi][1]++;
+                    }
+                    else {
+                        gi++;
+                        groups.push([]);
+                        groups[gi] = [c[i], c[i]];
+                    }
+                }
+                return groups;
+            })(allBlocks);
+    
+            const bc = JSON.parse(wallet.blocks_checked) || {};
+            bc[network] = checked;    
+            updateSql.run([ JSON.stringify(bc), wallet.wallet ]);
+        }));
+        
+        insertSql.finalize();
+        updateSql.finalize();
 
         return { message: 'success' };
     },
