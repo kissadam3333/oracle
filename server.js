@@ -36,15 +36,15 @@ app.get('/:network', cors(), (req, res) => {
         // select nth transaction from each block
         let nth = 0;
         if (req.query.nth && !isNaN(req.query.nth)){
-            nth = parseFloat(req.query.nth);
+            nth = Math.max(0.01, parseFloat(req.query.nth));
         }
         stats.minGwei = stats.minGwei.map(b => {
             let i = b.length - 1;
             if (nth > 0 && nth < 1){
-                i = parseInt(b.length * nth - 1);
+                i = Math.max(0.01, parseInt(b.length * nth - 1));
             }
             else if (nth < b.length){
-                i = nth;
+                i = nth - 1;
             }
             return b[i];
         });
