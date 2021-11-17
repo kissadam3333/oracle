@@ -110,7 +110,7 @@ const rpc = {
 
     recordBlock: function(block) {
         // extract the gas from transactions
-        const transactions = block.transactions.filter(t => t.gasPrice != '0').map(t => parseFloat(this.web3.utils.fromWei(t.gasPrice, 'gwei')));
+        const transactions = block.transactions.filter(t => t.gasPrice != '0').map(t => parseFloat(this.web3.utils.fromWei(t.gasPrice, 'gwei'))).sort((a,b) => a - b);
         this.blocks[block.number] = {
             ntx: transactions.length,
             timestamp: block.timestamp,
@@ -121,9 +121,8 @@ const rpc = {
         if (transactions.length){
             // set average gas per tx in the block
             const avgGas = parseInt(block.gasUsed) / transactions.length;
-            const minGas = Math.min(...transactions);
 
-            this.blocks[block.number].minGwei = minGas;
+            this.blocks[block.number].minGwei = transactions;
             this.blocks[block.number].avgGas = avgGas;
         }
 
