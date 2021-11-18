@@ -34,7 +34,7 @@ app.get('/:network', cors(), (req, res) => {
         Object.keys(stats).filter(e => Array.isArray(stats[e])).forEach(e => stats[e] = stats[e].slice(-blocks));
 
         // select nth transaction from each block
-        let nth = 1;
+        let nth = 0.3;
         if (req.query.nth && !isNaN(req.query.nth)){
             nth = Math.max(0.01, parseFloat(req.query.nth));
         }
