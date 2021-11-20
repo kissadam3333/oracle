@@ -3,27 +3,27 @@
         {
             "name"        : "oracle_eth",
             "script"      : "./oracle.js",
-            "args"        : "-n ethereum"
+            "args"        : "-n ethereum -t 7000"
         },
         {
             "name"        : "oracle_bsc",
             "script"      : "./oracle.js",
-            "args"        : "-n bsc"
+            "args"        : "-n bsc -t 2000"
         },
         {
             "name"        : "oracle_polygon",
             "script"      : "./oracle.js",
-            "args"        : "-n polygon"
+            "args"        : "-n polygon -t 1000"
         },
         {
             "name"        : "oracle_fantom",
             "script"      : "./oracle.js",
-            "args"        : "-n fantom"
+            "args"        : "-n fantom -t 400"
         },
         {
             "name"        : "oracle_avax",
             "script"      : "./oracle.js",
-            "args"        : "-n avax"
+            "args"        : "-n avax -t 1000"
         },
         {
             "name"        : "oracle_server",

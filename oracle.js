@@ -5,6 +5,7 @@ const db = require('./database');
 const args = {
     network: 'ethereum',
     sampleSize: 1000,
+    timeInterval: 1000,
 };
 
 // receive args
@@ -14,6 +15,9 @@ process.argv.forEach((val, index, array) => {
     }
     if ((val == '-s' || val == '--sample-size') && array[index+1]){
         args.sampleSize = array[index+1];
+    }
+    if ((val == '-t' || val == '--time-interval') && array[index+1]){
+        args.timeInterval = array[index+1];
     }
 });
 
@@ -101,7 +105,7 @@ const rpc = {
                 this.recordBlock(block);
             }
 
-            setTimeout(() => this.loop(), sortedBlocks.length < this.sampleSize ? 10 : 1000);
+            setTimeout(() => this.loop(), sortedBlocks.length < this.sampleSize ? 10 : args.timeInterval);
         }
         catch (error){
             console.log(error);
