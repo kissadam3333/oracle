@@ -4,7 +4,7 @@
 
 # Owlracle Web
 
-This is the webserver and frontend code for [Owlracle](https://owlracle.info) website. If you want to check the gas price oracle repo, check [here](https://github.com/werlang/owlracle).
+Owlracle is a tool for generating statistics concerning gas price estimations for several norworks. It retrieve raw information from web3 RPCs and feed it to [Owlracle](https://owlracle.info) and [Bscgas](https://bscgas.info) websites.
 
 ## Motivation
 
@@ -12,22 +12,82 @@ When the dawn of smart networks arrived, dapp developers saw the need to know th
 
 Inspired by works like [ethgasstation](https://ethgasstation.info/), I have decided to create a gas price oracle working on several networks. Right now we provide estimations for Ethereum, Binance Smart Chain, Polygon, Fantom and Avalanche networks. Services like owlracle are a way to remove this burden from your servers (this can be somewhat resource-intensive), while providing API to help integrate your dapps to our predictions.
 
-## Gas Price Estimation
+## Installation
 
- ```/gas``` endpoint retrive not only the average gas price paid in the last N transactions in the chosen network, but also the average gas fee (in USD) paid and native token price. The main difference from other API oracle services is that Owlracle  endpoint return fully customized information:
+Clone this repo:
+```
+git clone https://github.com/owlracle/oracle.git
+```
 
- * How many transactions in the past will be analysed for making the calculations? *Default 200* blocks in the past;
- * What is the desired transaction acceptance rate you are looking for? e.g. 60% blocks accepted a transaction using a given gas price.
- * How many acceptance rates you want to track? You can provice a list. In practice, this is the same as *speeds* from similar services. But in Owlracle, you can fully customize it.
- * Number of lowest gas transactions to be considered when calculating minimum gas price accepted by the block.
+Install dependencies:
+```
+npm install
+```
 
-## Gas price history
+Also make sure you have [pm2](https://pm2.keymetrics.io/) installed.
 
-```/history``` endpoint retrieve [candlestick](https://en.wikipedia.org/wiki/Candlestick_chart) information about historic gas prices, native token price, and gas fee (in USD) paid over the course of time. You can customize the desired timeframe, and the time period of the search.
+## Default usage
 
-##
+Run oracles for each network and server exposing the service:
+```
+pm2 start pm2.json
+```
 
-### Want to know more? Check [owlracle.info](https://owlracle.info) for a full documentation.
+## Running custom networks 
+
+RPCs addresses are stored in ```rpcs.json``` if you want to add, change or remove any of them.
+
+For running a custom network oracle, run:
+
+```
+node oracle.js -n [network] -t [interval]
+```
+
+Where:
+* ```network``` is the network name present in the RPCs json file
+* ```interval``` is the time (in ms) between each check for new blocks on that network. Note that you must specify an interval lower than the network's average block time.
+
+For running the server, use:
+
+```
+node server.js -p [port]
+```
+
+Where ```port``` is the port you wish to expose the API containing every oracle's retrieved information.
+
+After those steps you will have one oracle process for each network and a server process for serving the API.
+
+
+## API
+
+For consuming the oracle API, fetch the ```/[network]``` endpoint using a ```GET``` request, where ```network``` is the same network name as the running oracle and the network name in the rpcs file.
+
+The request will retrieve information from the chosen network, and it can have the following query parameters:
+
+* ```blocks```: How many blocks in the past you want to get information from? _Default 200_. _Maximum 1000_.
+* ```nth```: How many of the lowest gas priced transactions you want to consider when determining the lowest gas price accepted on each block? If informed a value between 0 and 1 it will be considered a percentage value (as in % of blocks). _Default 0.3_.
+
+On a successful request, a json will be returned with the following fields:
+
+* ```ntx```: **number array**. Transaction count from each block;
+* ```timestamp```: **number array**. UNIX timestamp of the mined time from each block;
+* ```minGwei```: **number array**. The minimum gas accepted (influenced by ```nth``` argument) by each block;
+* ```avgGas```: **number array**. Average gas used on transactions for each block;
+* ```lastBlock```: **number**. Last block number retrieved by the oracle.
+
+### Sample response
+
+```
+{
+  "ntx": [3,4,2,5,3],
+  "timestamp": [123,123,123,123,123],
+  "minGwei": [1,2,1,3,2],
+  "avgGas": [10000,10000,10000,10000,10000],
+  "lastBlock": 12345
+}
+```
+
+---
 
 <a href="https://twitter.com/owlracleAPI">
 <img src="https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white">
